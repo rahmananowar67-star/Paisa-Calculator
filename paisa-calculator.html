@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1d4ed8">
+<meta name="description" content="EMI, SIP aur GST calculator. Turant hisaab, bina login ke.">
+<title>Paisa Calculator</title>
+<style>
+  :root{
+    --bg:#f5f7fb; --card:#ffffff; --text:#14181f; --muted:#667085;
+    --accent:#1d4ed8; --accent-ink:#ffffff; --line:#e4e8f0; --good:#0f9f6e; --warm:#f59e0b;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0e1118; --card:#171b24; --text:#eef1f6; --muted:#98a2b3; --accent:#6ea0ff; --accent-ink:#0a1530; --line:#262c38; --good:#34d399; --warm:#fbbf24; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Devanagari",sans-serif;line-height:1.4}
+  .wrap{max-width:560px;margin:0 auto;padding:16px}
+  h1{font-size:20px;margin:4px 0 2px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 14px}
+  .tabs{display:flex;gap:6px;margin-bottom:12px}
+  .tab{flex:1;border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:10px;padding:10px 4px;font:inherit;font-size:15px;cursor:pointer}
+  .tab[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+  label{display:block;font-size:14px;color:var(--muted);margin:10px 0 4px}
+  label:first-child{margin-top:0}
+  input[type=number]{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:10px;padding:11px;font:inherit;font-size:17px}
+  input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  select{border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:10px;padding:11px;font:inherit;font-size:16px}
+  .two{display:flex;gap:8px}
+  .two>*{flex:1;min-width:0}
+  .big{font-size:34px;font-weight:700;letter-spacing:-.5px;margin:2px 0}
+  .big small{display:block;font-size:13px;font-weight:500;color:var(--muted);letter-spacing:0}
+  .rows{margin-top:10px}
+  .r{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--line);font-size:15px}
+  .r b{font-weight:700}
+  .split{display:flex;height:12px;border-radius:8px;overflow:hidden;background:var(--line);margin:12px 0 6px}
+  .split span{display:block;height:100%;transition:width .3s}
+  .legend{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+  .chip{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:999px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer}
+  .chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+  .seg{display:flex;gap:6px}
+  .seg .chip{flex:1;border-radius:10px}
+  .note{font-size:12px;color:var(--muted);margin:6px 2px}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🧮 Paisa Calculator</h1>
+  <p class="sub">EMI, SIP aur GST: turant hisaab.</p>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-p="emi" aria-selected="true">🏦 EMI</button>
+    <button class="tab" role="tab" data-p="sip" aria-selected="false">📈 SIP</button>
+    <button class="tab" role="tab" data-p="gst" aria-selected="false">🧾 GST</button>
+  </div>
+
+  <!-- EMI -->
+  <section id="p-emi">
+    <div class="card">
+      <label for="emi-p">Loan ki rakam (₹)</label>
+      <input type="number" id="emi-p" inputmode="decimal" value="500000" min="0">
+      <label for="emi-r">Saalana byaaj dar (%)</label>
+      <input type="number" id="emi-r" inputmode="decimal" value="10" min="0" step="0.1">
+      <label for="emi-t">Kitne samay ke liye</label>
+      <div class="two">
+        <input type="number" id="emi-t" inputmode="numeric" value="5" min="1">
+        <select id="emi-u" aria-label="Samay ki ikai"><option value="y">saal</option><option value="m">mahine</option></select>
+      </div>
+    </div>
+    <div class="card">
+      <div class="big"><span id="emi-out">₹0</span><small>har mahine ki EMI</small></div>
+      <div class="split"><span id="emi-b1" style="background:var(--accent)"></span><span id="emi-b2" style="background:var(--warm)"></span></div>
+      <div class="legend"><span><i class="dot" style="background:var(--accent)"></i>Asli rakam</span><span><i class="dot" style="background:var(--warm)"></i>Byaaj</span></div>
+      <div class="rows">
+        <div class="r"><span>Asli rakam</span><b id="emi-pr">-</b></div>
+        <div class="r"><span>Kul byaaj</span><b id="emi-int">-</b></div>
+        <div class="r"><span>Kul chukana hoga</span><b id="emi-tot">-</b></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIP -->
+  <section id="p-sip" hidden>
+    <div class="card">
+      <label for="sip-p">Har mahine kitna lagaoge (₹)</label>
+      <input type="number" id="sip-p" inputmode="decimal" value="5000" min="0">
+      <label for="sip-r">Anumaanit saalana return (%)</label>
+      <input type="number" id="sip-r" inputmode="decimal" value="12" min="0" step="0.1">
+      <label for="sip-t">Kitne saal</label>
+      <input type="number" id="sip-t" inputmode="numeric" value="10" min="1">
+    </div>
+    <div class="card">
+      <div class="big"><span id="sip-out">₹0</span><small>aakhir mein kul rakam (anumaan)</small></div>
+      <div class="split"><span id="sip-b1" style="background:var(--accent)"></span><span id="sip-b2" style="background:var(--good)"></span></div>
+      <div class="legend"><span><i class="dot" style="background:var(--accent)"></i>Aapka lagaya</span><span><i class="dot" style="background:var(--good)"></i>Munafa</span></div>
+      <div class="rows">
+        <div class="r"><span>Kul lagaya</span><b id="sip-inv">-</b></div>
+        <div class="r"><span>Anumaanit munafa</span><b id="sip-gain">-</b></div>
+      </div>
+    </div>
+    <p class="note">Ye sirf anumaan hai, guarantee nahi. Asli return market ke hisaab se upar-neeche hota hai.</p>
+  </section>
+
+  <!-- GST -->
+  <section id="p-gst" hidden>
+    <div class="card">
+      <div class="seg" role="group" aria-label="GST ka tareeka">
+        <button class="chip" id="gst-add" aria-pressed="true">GST jodo</button>
+        <button class="chip" id="gst-rem" aria-pressed="false">GST nikalo</button>
+      </div>
+      <label for="gst-a" id="gst-alabel">Bina GST wali rakam (₹)</label>
+      <input type="number" id="gst-a" inputmode="decimal" value="1000" min="0">
+      <label for="gst-r">GST dar (%)</label>
+      <div class="chips" id="gst-chips">
+        <button class="chip" data-r="5" aria-pressed="false">5%</button>
+        <button class="chip" data-r="18" aria-pressed="true">18%</button>
+        <button class="chip" data-r="40" aria-pressed="false">40%</button>
+      </div>
+      <input type="number" id="gst-r" inputmode="decimal" value="18" min="0" step="0.1" style="margin-top:8px">
+    </div>
+    <div class="card">
+      <div class="big"><span id="gst-out">₹0</span><small id="gst-outl">GST ke saath kul rakam</small></div>
+      <div class="rows">
+        <div class="r"><span>Bina GST rakam</span><b id="gst-base">-</b></div>
+        <div class="r"><span>Kul GST</span><b id="gst-tax">-</b></div>
+        <div class="r"><span>CGST (aadha)</span><b id="gst-c">-</b></div>
+        <div class="r"><span>SGST (aadha)</span><b id="gst-s">-</b></div>
+      </div>
+    </div>
+    <p class="note">GST dar apne saamaan ke hisaab se chuno. Dar badalti rehti hai, isliye bill ya sarkaari site se ek baar pakka kar lo.</p>
+  </section>
+</div>
+
+<script>
+(function(){
+  function $(id){ return document.getElementById(id); }
+  function num(id){ var v = parseFloat($(id).value); return (isFinite(v) && v>0) ? v : 0; }
+  function rs(n){ return "₹"+Math.round(n).toLocaleString("en-IN"); }
+  function rs2(n){ return "₹"+(Math.round(n*100)/100).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function pct(a,b){ return b>0 ? Math.round(a/b*100) : 0; }
+
+  function emi(){
+    var P = num("emi-p"), rate = num("emi-r"), t = num("emi-t");
+    var n = $("emi-u").value==="y" ? Math.round(t*12) : Math.round(t);
+    if(!P || !n){
+      ["emi-out"].forEach(function(i){ $(i).textContent = "₹0"; });
+      ["emi-pr","emi-int","emi-tot"].forEach(function(i){ $(i).textContent = "-"; });
+      $("emi-b1").style.width="0"; $("emi-b2").style.width="0"; return;
+    }
+    var r = rate/12/100, E;
+    if(r===0){ E = P/n; }
+    else { var g = Math.pow(1+r,n); E = P*r*g/(g-1); }
+    var tot = E*n, intr = tot-P;
+    $("emi-out").textContent = rs(E);
+    $("emi-pr").textContent = rs(P);
+    $("emi-int").textContent = rs(intr);
+    $("emi-tot").textContent = rs(tot);
+    var a = pct(P,tot);
+    $("emi-b1").style.width = a+"%"; $("emi-b2").style.width = (100-a)+"%";
+  }
+
+  function sip(){
+    var P = num("sip-p"), rate = num("sip-r"), yrs = num("sip-t");
+    var n = Math.round(yrs*12);
+    if(!P || !n){
+      $("sip-out").textContent="₹0"; $("sip-inv").textContent="-"; $("sip-gain").textContent="-";
+      $("sip-b1").style.width="0"; $("sip-b2").style.width="0"; return;
+    }
+    var i = rate/12/100, fv;
+    if(i===0){ fv = P*n; }
+    else { fv = P*((Math.pow(1+i,n)-1)/i)*(1+i); }
+    var inv = P*n, gain = fv-inv;
+    $("sip-out").textContent = rs(fv);
+    $("sip-inv").textContent = rs(inv);
+    $("sip-gain").textContent = rs(gain);
+    var a = pct(inv,fv);
+    $("sip-b1").style.width = a+"%"; $("sip-b2").style.width = (100-a)+"%";
+  }
+
+  var gstMode = "add";
+  function gst(){
+    var A = num("gst-a"), r = num("gst-r")/100, base, tax, total;
+    if(gstMode==="add"){ base = A; tax = A*r; total = A+tax; }
+    else { total = A; base = A/(1+r); tax = A-base; }
+    if(gstMode==="add"){
+      $("gst-out").textContent = rs2(total); $("gst-outl").textContent = "GST ke saath kul rakam";
+    } else {
+      $("gst-out").textContent = rs2(base); $("gst-outl").textContent = "GST nikalne ke baad asli rakam";
+    }
+    $("gst-base").textContent = rs2(base);
+    $("gst-tax").textContent = rs2(tax);
+    $("gst-c").textContent = rs2(tax/2);
+    $("gst-s").textContent = rs2(tax/2);
+  }
+  function setMode(m){
+    gstMode = m;
+    $("gst-add").setAttribute("aria-pressed", m==="add" ? "true":"false");
+    $("gst-rem").setAttribute("aria-pressed", m==="rem" ? "true":"false");
+    $("gst-alabel").textContent = m==="add" ? "Bina GST wali rakam (₹)" : "GST ke saath wali rakam (₹)";
+    gst();
+  }
+  function syncChips(){
+    var cur = num("gst-r");
+    Array.prototype.forEach.call($("gst-chips").children, function(c){
+      c.setAttribute("aria-pressed", parseFloat(c.getAttribute("data-r"))===cur ? "true":"false");
+    });
+  }
+
+  ["emi-p","emi-r","emi-t","emi-u"].forEach(function(id){ $(id).addEventListener("input", emi); $(id).addEventListener("change", emi); });
+  ["sip-p","sip-r","sip-t"].forEach(function(id){ $(id).addEventListener("input", sip); });
+  ["gst-a","gst-r"].forEach(function(id){ $(id).addEventListener("input", function(){ syncChips(); gst(); }); });
+  Array.prototype.forEach.call($("gst-chips").children, function(c){
+    c.addEventListener("click", function(){ $("gst-r").value = c.getAttribute("data-r"); syncChips(); gst(); });
+  });
+  $("gst-add").addEventListener("click", function(){ setMode("add"); });
+  $("gst-rem").addEventListener("click", function(){ setMode("rem"); });
+
+  Array.prototype.forEach.call(document.querySelectorAll(".tab"), function(t){
+    t.addEventListener("click", function(){
+      Array.prototype.forEach.call(document.querySelectorAll(".tab"), function(o){
+        var on = o===t;
+        o.setAttribute("aria-selected", on ? "true":"false");
+        $("p-"+o.getAttribute("data-p")).hidden = !on;
+      });
+    });
+  });
+
+  emi(); sip(); gst();
+})();
+</script>
+</body>
+</html>
